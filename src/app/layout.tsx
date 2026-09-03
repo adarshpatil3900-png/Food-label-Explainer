@@ -10,7 +10,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Food Label Explainer",
-  description: "Extract and examine text from packaged food labels using client-side OCR.",
+  description:
+    "Extract, examine, and understand packaged food nutrition facts and ingredients with client-side OCR and plain-language explanation.",
 };
 
 export default function RootLayout({

@@ -60,6 +60,7 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
         accept="image/*"
         className="hidden"
         id="file-upload-input"
+        aria-label="Upload image file"
         onChange={handleFileChange}
         disabled={disabled}
       />
@@ -70,6 +71,7 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
         capture="environment"
         className="hidden"
         id="camera-capture-input"
+        aria-label="Capture photo with camera"
         onChange={handleFileChange}
         disabled={disabled}
       />
@@ -79,6 +81,8 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        role="region"
+        aria-label="File dropzone"
         className={`border-2 border-dashed rounded-md p-8 sm:p-12 text-center transition-colors ${
           isDragging
             ? "border-accent bg-accent-light"
@@ -87,7 +91,7 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
       >
         <div className="max-w-sm mx-auto flex flex-col items-center">
           <div className="w-12 h-12 rounded border border-subtle bg-background flex items-center justify-center text-secondary mb-4">
-            <Upload className="w-6 h-6" strokeWidth={1.5} />
+            <Upload className="w-6 h-6" strokeWidth={1.5} aria-hidden="true" />
           </div>
 
           <h2 className="text-base font-medium text-primary mb-1">
@@ -104,9 +108,10 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
               id="choose-file-btn"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active rounded transition-colors inline-flex items-center justify-center gap-2"
+              aria-label="Choose image file from your device"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
-              <ImageIcon className="w-4 h-4" strokeWidth={1.75} />
+              <ImageIcon className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
               <span>Choose Image</span>
             </button>
 
@@ -115,9 +120,10 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
               id="take-photo-btn"
               onClick={() => cameraInputRef.current?.click()}
               disabled={disabled}
-              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary bg-surface hover:bg-background active:bg-subtle border border-subtle rounded transition-colors inline-flex items-center justify-center gap-2"
+              aria-label="Take photo with camera"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary bg-surface hover:bg-background active:bg-subtle border border-subtle rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
-              <Camera className="w-4 h-4 text-secondary" strokeWidth={1.75} />
+              <Camera className="w-4 h-4 text-secondary" strokeWidth={1.75} aria-hidden="true" />
               <span>Take Photo</span>
             </button>
           </div>

@@ -6,6 +6,7 @@ import { ImagePreview } from "@/components/ImagePreview";
 import { OcrStatus } from "@/components/OcrStatus";
 import { StructuredResultsView } from "@/components/StructuredResultsView";
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { ExplanationData } from "@/components/ExplanationView";
 import { performOcr, OcrResult, OcrProgress } from "@/lib/ocr";
 import { parseNutrition, ParsedNutritionData } from "@/lib/parseNutrition";
 import { parseIngredients, ParsedIngredientsData } from "@/lib/parseIngredients";
@@ -30,6 +31,57 @@ export default function HomePage() {
   const [summaryTags, setSummaryTags] = useState<NutritionTag[]>([]);
   const [errorText, setErrorText] = useState<string | null>(null);
 
+  // AI Explanation state
+  const [explanationStatus, setExplanationStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [explanationData, setExplanationData] = useState<ExplanationData | null>(null);
+  const [explanationError, setExplanationError] = useState<string | null>(null);
+
+  const fetchExplanation = async (
+    nutrients: ParsedNutritionData,
+    ings: ParsedIngredientsData,
+    tags: NutritionTag[]
+  ) => {
+    setExplanationStatus("loading");
+    setExplanationError(null);
+
+    try {
+      const response = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nutrition: nutrients,
+          ingredientsData: ings,
+          summaryTags: tags,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setExplanationError(
+          result?.message ||
+            "Explanation unavailable right now — the nutrition data above is still accurate."
+        );
+        setExplanationStatus("error");
+        return;
+      }
+
+      setExplanationData({
+        explanation: result.explanation,
+        takeaway: result.takeaway,
+      });
+      setExplanationStatus("success");
+    } catch (err: any) {
+      console.error("Failed to fetch explanation:", err);
+      setExplanationError(
+        "Explanation unavailable right now — the nutrition data above is still accurate."
+      );
+      setExplanationStatus("error");
+    }
+  };
+
   const handleImageSelected = (file: File) => {
     setSelectedFile(file);
     setAppState("ready");
@@ -38,6 +90,9 @@ export default function HomePage() {
     setNutrition(null);
     setIngredients(null);
     setSummaryTags([]);
+    setExplanationStatus("idle");
+    setExplanationData(null);
+    setExplanationError(null);
   };
 
   const handleReset = useCallback(() => {
@@ -49,6 +104,9 @@ export default function HomePage() {
     setSummaryTags([]);
     setErrorText(null);
     setProgress({ status: "idle", progress: 0, message: "Initializing…" });
+    setExplanationStatus("idle");
+    setExplanationData(null);
+    setExplanationError(null);
     setAppState("idle");
   }, []);
 
@@ -56,6 +114,9 @@ export default function HomePage() {
     setActiveImageSource(processedSource);
     setAppState("processing");
     setErrorText(null);
+    setExplanationStatus("idle");
+    setExplanationData(null);
+    setExplanationError(null);
     setProgress({
       status: "starting",
       progress: 0.05,
@@ -77,6 +138,9 @@ export default function HomePage() {
       setIngredients(parsedIngs);
       setSummaryTags(tags);
       setAppState("success");
+
+      // Automatically trigger AI explanation layer
+      fetchExplanation(parsedNutrients, parsedIngs, tags);
     } catch (err: any) {
       console.error("OCR execution error:", err);
       setErrorText(
@@ -84,6 +148,12 @@ export default function HomePage() {
           "Failed to process food label. Please ensure the image is clear and try again."
       );
       setAppState("error");
+    }
+  };
+
+  const handleRetryExplanation = () => {
+    if (nutrition && ingredients) {
+      fetchExplanation(nutrition, ingredients, summaryTags);
     }
   };
 
@@ -236,7 +306,8 @@ export default function HomePage() {
                 type="button"
                 id="sample-granola-btn"
                 onClick={() => loadSampleLabel("granola")}
-                className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors"
+                aria-label="Load granola label sample"
+                className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 Granola Label
               </button>
@@ -244,7 +315,8 @@ export default function HomePage() {
                 type="button"
                 id="sample-soup-btn"
                 onClick={() => loadSampleLabel("soup")}
-                className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors"
+                aria-label="Load vegetable soup label sample"
+                className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 Soup Label
               </button>
@@ -279,6 +351,10 @@ export default function HomePage() {
             nutrition={nutrition}
             ingredientsData={ingredients}
             summaryTags={summaryTags}
+            explanationStatus={explanationStatus}
+            explanationData={explanationData}
+            explanationError={explanationError}
+            onRetryExplanation={handleRetryExplanation}
             onReset={handleReset}
             onReanalyze={() => {
               if (activeImageSource) {
@@ -290,14 +366,17 @@ export default function HomePage() {
           {/* Collapsible reference to scanned photo */}
           <div className="border border-subtle bg-surface rounded-md p-4">
             <details className="group">
-              <summary className="text-xs font-medium text-secondary hover:text-primary cursor-pointer select-none list-none flex items-center justify-between">
+              <summary
+                aria-label={`View scanned source photo ${selectedFile.name}`}
+                className="text-xs font-medium text-secondary hover:text-primary cursor-pointer select-none list-none flex items-center justify-between focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+              >
                 <span>View scanned source photo ({selectedFile.name})</span>
-                <span className="text-[10px] text-secondary group-open:rotate-180 transition-transform">▼</span>
+                <span className="text-[10px] text-secondary group-open:rotate-180 transition-transform" aria-hidden="true">▼</span>
               </summary>
               <div className="mt-3 pt-3 border-t border-subtle flex justify-center bg-background p-2 rounded">
                 <img
                   src={URL.createObjectURL(selectedFile)}
-                  alt="Scanned source"
+                  alt="Scanned source food package label"
                   className="max-h-[300px] object-contain rounded-sm"
                 />
               </div>

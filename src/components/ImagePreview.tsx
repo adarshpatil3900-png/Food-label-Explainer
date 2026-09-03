@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { RefreshCw, Play, Sliders, CheckCircle } from "lucide-react";
+import { RefreshCw, Play } from "lucide-react";
 import { preprocessImage } from "@/lib/preprocess";
 
 interface ImagePreviewProps {
@@ -91,9 +91,10 @@ export function ImagePreview({
           id="upload-different-btn"
           onClick={onReset}
           disabled={isProcessing}
-          className="text-xs text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto py-1 px-2 border border-subtle rounded bg-background hover:bg-subtle"
+          aria-label="Upload a different image"
+          className="text-xs text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto py-1 px-2.5 border border-subtle rounded bg-background hover:bg-subtle focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Upload different image</span>
         </button>
       </div>
@@ -101,10 +102,9 @@ export function ImagePreview({
       {/* Contained Image Frame */}
       <div className="relative bg-background border border-subtle rounded flex items-center justify-center p-3 min-h-[260px] max-h-[420px] overflow-hidden">
         {currentDisplayUrl ? (
-          // Standard img element for exact pixel fidelity and aspect ratio handling
           <img
             src={currentDisplayUrl}
-            alt="Selected food label"
+            alt="Selected food label preview"
             className="max-h-[390px] w-auto max-w-full object-contain rounded-sm"
           />
         ) : (
@@ -117,7 +117,8 @@ export function ImagePreview({
             <button
               type="button"
               onClick={() => setPreviewMode("original")}
-              className={`px-2.5 py-1 transition-colors ${
+              aria-label="View original image"
+              className={`px-2.5 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                 previewMode === "original"
                   ? "font-medium text-primary bg-subtle/50"
                   : "text-secondary hover:text-primary"
@@ -129,7 +130,8 @@ export function ImagePreview({
             <button
               type="button"
               onClick={() => setPreviewMode("preprocessed")}
-              className={`px-2.5 py-1 transition-colors ${
+              aria-label="View contrast-enhanced OCR preview"
+              className={`px-2.5 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                 previewMode === "preprocessed"
                   ? "font-medium text-primary bg-subtle/50"
                   : "text-secondary hover:text-primary"
@@ -167,9 +169,10 @@ export function ImagePreview({
           id="analyze-label-btn"
           onClick={handleAnalyzeClick}
           disabled={isProcessing || isPreprocessingActive}
-          className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:pointer-events-none rounded transition-colors inline-flex items-center justify-center gap-2"
+          aria-label="Analyze food label with OCR"
+          className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:pointer-events-none rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
-          <Play className="w-4 h-4 fill-current" />
+          <Play className="w-4 h-4 fill-current" aria-hidden="true" />
           <span>Analyze Label</span>
         </button>
       </div>

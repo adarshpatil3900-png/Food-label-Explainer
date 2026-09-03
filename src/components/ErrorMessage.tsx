@@ -15,10 +15,13 @@ export function ErrorMessage({
   onReset,
 }: ErrorMessageProps) {
   return (
-    <div className="w-full bg-surface border border-subtle rounded-md p-6 space-y-4">
+    <div
+      role="alert"
+      className="w-full bg-surface border border-subtle rounded-md p-6 space-y-4"
+    >
       <div className="flex items-start gap-3">
         <div className="p-1.5 rounded bg-amber-50 border border-amber-200 text-amber-700 flex-shrink-0 mt-0.5">
-          <AlertCircle className="w-4 h-4" />
+          <AlertCircle className="w-4 h-4" aria-hidden="true" />
         </div>
         <div className="space-y-1">
           <h3 className="text-sm font-semibold text-primary">
@@ -44,9 +47,10 @@ export function ErrorMessage({
           type="button"
           id="retry-ocr-btn"
           onClick={onRetry}
-          className="px-4 py-2 text-xs font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active rounded transition-colors inline-flex items-center gap-2"
+          aria-label="Retry OCR analysis"
+          className="px-4 py-2 text-xs font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active rounded transition-colors inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Try Again</span>
         </button>
 
@@ -54,9 +58,10 @@ export function ErrorMessage({
           type="button"
           id="error-reset-btn"
           onClick={onReset}
-          className="px-4 py-2 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors inline-flex items-center gap-2"
+          aria-label="Choose a different photo"
+          className="px-4 py-2 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
-          <Upload className="w-3.5 h-3.5 text-secondary" />
+          <Upload className="w-3.5 h-3.5 text-secondary" aria-hidden="true" />
           <span>Choose Different Photo</span>
         </button>
       </div>
