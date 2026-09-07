@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { ParsedNutritionData } from "@/lib/parseNutrition";
 import { ParsedIngredientsData } from "@/lib/parseIngredients";
 import { NutritionTag } from "@/lib/nutritionSummary";
@@ -21,13 +22,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey.trim() === "" || apiKey === "your_anthropic_api_key_here") {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (
+      !apiKey ||
+      apiKey.trim() === "" ||
+      apiKey === "your_actual_key_here" ||
+      apiKey === "your_gemini_api_key_here"
+    ) {
       return NextResponse.json(
         {
           error: "API_KEY_MISSING",
           message:
-            "Anthropic API key is not configured. Add ANTHROPIC_API_KEY to your .env.local file to enable live AI explanations.",
+            "Gemini API key is not configured. Add GEMINI_API_KEY to your .env.local file to enable live AI explanations.",
         },
         { status: 503 }
       );
@@ -76,11 +82,7 @@ ${allergensList}
 RULE-BASED SUMMARY HIGHLIGHTS:
 ${tagsList}
 
-Respond strictly with a JSON object in this exact schema:
-{
-  "explanation": "A direct, plain-language explanation of this food's nutritional profile and ingredients. Highlight what stands out (e.g. macronutrient balance, notable ingredients, processing level, sodium/sugar density) without making alarmist statements or medical diagnoses. Write as a knowledgeable guide.",
-  "takeaway": "A 2 to 4 sentence overall takeaway summarizing what this food is best suited for, and what to keep in mind when eating it."
-}`;
+Respond strictly with a JSON object containing "explanation" and "takeaway" fields.`;
 
     const systemPrompt = `You are a nutrition explanation assistant for a food label explainer tool.
 Your goal is to provide honest, plain-language explanations of food labels for everyday consumers.
@@ -91,43 +93,45 @@ Guidelines:
 - Avoid generic filler phrases like "As an AI", "It's important to note", or "In summary" — write directly and concisely.
 - Return ONLY valid JSON matching {"explanation": string, "takeaway": string}. Do not wrap in markdown or backticks.`;
 
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      systemInstruction: systemPrompt,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            explanation: {
+              type: SchemaType.STRING,
+              description:
+                "A direct, plain-language explanation of this food's nutritional profile and ingredients.",
+            },
+            takeaway: {
+              type: SchemaType.STRING,
+              description:
+                "A 2 to 4 sentence overall takeaway summarizing what this food is best suited for.",
+            },
+          },
+          required: ["explanation", "takeaway"],
+        },
+      },
+    });
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+      const result = await model.generateContent(
+        {
+          contents: [{ role: "user", parts: [{ text: promptText }] }],
         },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: [{ role: "user", content: promptText }],
-        }),
-        signal: controller.signal,
-      });
+        { signal: controller.signal }
+      );
 
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("Anthropic API error:", response.status, errorBody);
-        return NextResponse.json(
-          {
-            error: "API_ERROR",
-            message: `Anthropic API error (${response.status}). Explanation unavailable right now.`,
-          },
-          { status: response.status >= 500 ? 502 : 400 }
-        );
-      }
-
-      const data = await response.json();
-      const contentBlock = data?.content?.[0];
-      const rawText = contentBlock?.text || "";
+      const rawText = result.response.text();
 
       // Parse JSON response safely
       let parsedResponse: { explanation: string; takeaway: string };
@@ -149,9 +153,10 @@ Guidelines:
         explanation: parsedResponse.explanation || "No explanation text generated.",
         takeaway: parsedResponse.takeaway || "",
       });
-    } catch (fetchErr: any) {
+    } catch (genErr: any) {
       clearTimeout(timeoutId);
-      if (fetchErr?.name === "AbortError") {
+
+      if (genErr?.name === "AbortError") {
         return NextResponse.json(
           {
             error: "TIMEOUT",
@@ -160,7 +165,17 @@ Guidelines:
           { status: 504 }
         );
       }
-      throw fetchErr;
+
+      console.error("Gemini API error:", genErr);
+      return NextResponse.json(
+        {
+          error: "API_ERROR",
+          message:
+            genErr?.message ||
+            "Gemini API error. Explanation unavailable right now.",
+        },
+        { status: 502 }
+      );
     }
   } catch (err: any) {
     console.error("Unhandled error in /api/explain:", err);
