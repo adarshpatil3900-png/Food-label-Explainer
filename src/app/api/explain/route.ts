@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { ParsedNutritionData } from "@/lib/parseNutrition";
 import { ParsedIngredientsData } from "@/lib/parseIngredients";
 import { NutritionTag } from "@/lib/nutritionSummary";
@@ -9,6 +9,34 @@ interface ExplainRequestBody {
   ingredientsData?: ParsedIngredientsData;
   summaryTags?: NutritionTag[];
 }
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
+
+const systemPrompt = `You are a nutrition explanation assistant for a food label explainer tool.
+Your goal is to provide honest, plain-language explanations of food labels for everyday consumers.
+Guidelines:
+- Explain the nutrition profile in plain, accessible language (assume a general audience, not a nutritionist).
+- Briefly note anything notable about the ingredients if relevant (e.g. whole food bases vs refined ingredients, additives, sweeteners, sodium sources, allergens) without being alarmist or making medical claims.
+- Give a short overall takeaway (2-4 sentences max for the takeaway).
+- Avoid generic filler phrases like "As an AI", "It's important to note", or "In summary" — write directly and concisely.
+- Return ONLY valid JSON matching {"explanation": string, "takeaway": string}. Do not wrap in markdown or backticks.`;
+
+const responseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    explanation: {
+      type: Type.STRING,
+      description:
+        "A direct, plain-language explanation of this food's nutritional profile and ingredients. Highlight what stands out (e.g. macronutrient balance, notable ingredients, processing level, sodium/sugar density) without making alarmist statements or medical diagnoses. Write as a knowledgeable guide.",
+    },
+    takeaway: {
+      type: Type.STRING,
+      description:
+        "A 2 to 4 sentence overall takeaway summarizing what this food is best suited for, and what to keep in mind when eating it.",
+    },
+  },
+  required: ["explanation", "takeaway"],
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,54 +112,25 @@ ${tagsList}
 
 Respond strictly with a JSON object containing "explanation" and "takeaway" fields.`;
 
-    const systemPrompt = `You are a nutrition explanation assistant for a food label explainer tool.
-Your goal is to provide honest, plain-language explanations of food labels for everyday consumers.
-Guidelines:
-- Explain the nutrition profile in plain, accessible language (assume a general audience, not a nutritionist).
-- Briefly note anything notable about the ingredients if relevant (e.g. whole food bases vs refined ingredients, additives, sweeteners, sodium sources, allergens) without being alarmist or making medical claims.
-- Give a short overall takeaway (2-4 sentences max for the takeaway).
-- Avoid generic filler phrases like "As an AI", "It's important to note", or "In summary" — write directly and concisely.
-- Return ONLY valid JSON matching {"explanation": string, "takeaway": string}. Do not wrap in markdown or backticks.`;
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
-      systemInstruction: systemPrompt,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            explanation: {
-              type: SchemaType.STRING,
-              description:
-                "A direct, plain-language explanation of this food's nutritional profile and ingredients.",
-            },
-            takeaway: {
-              type: SchemaType.STRING,
-              description:
-                "A 2 to 4 sentence overall takeaway summarizing what this food is best suited for.",
-            },
-          },
-          required: ["explanation", "takeaway"],
-        },
-      },
-    });
+    const ai = new GoogleGenAI({ apiKey });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
-      const result = await model.generateContent(
-        {
-          contents: [{ role: "user", parts: [{ text: promptText }] }],
+      const result = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [{ role: "user", parts: [{ text: promptText }] }],
+        config: {
+          systemInstruction: systemPrompt,
+          responseMimeType: "application/json",
+          responseSchema,
         },
-        { signal: controller.signal }
-      );
+      });
 
       clearTimeout(timeoutId);
 
-      const rawText = result.response.text();
+      const rawText = result.text ?? "";
 
       // Parse JSON response safely
       let parsedResponse: { explanation: string; takeaway: string };
@@ -167,14 +166,14 @@ Guidelines:
       }
 
       console.error("Gemini API error:", genErr);
+
+      // Surface the underlying API message for easier debugging
+      const errMessage: string =
+        genErr?.message || "Gemini API error. Explanation unavailable right now.";
+      const status = errMessage.includes("404") ? 502 : 502;
       return NextResponse.json(
-        {
-          error: "API_ERROR",
-          message:
-            genErr?.message ||
-            "Gemini API error. Explanation unavailable right now.",
-        },
-        { status: 502 }
+        { error: "API_ERROR", message: errMessage },
+        { status }
       );
     }
   } catch (err: any) {
