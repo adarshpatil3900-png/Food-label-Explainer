@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw, Play } from "lucide-react";
 import { preprocessImage } from "@/lib/preprocess";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface ImagePreviewProps {
   file: File;
@@ -17,6 +18,7 @@ export function ImagePreview({
   onReset,
   isProcessing,
 }: ImagePreviewProps) {
+  const { t } = useTranslation();
   const [rawUrl, setRawUrl] = useState<string>("");
   const [preprocessedUrl, setPreprocessedUrl] = useState<string | null>(null);
   const [preprocessedBlob, setPreprocessedBlob] = useState<Blob | null>(null);
@@ -91,11 +93,11 @@ export function ImagePreview({
           id="upload-different-btn"
           onClick={onReset}
           disabled={isProcessing}
-          aria-label="Upload a different image"
+          aria-label={t.preview.uploadDifferent}
           className="text-xs text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto py-1 px-2.5 border border-subtle rounded bg-background hover:bg-subtle focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Upload different image</span>
+          <span>{t.preview.uploadDifferent}</span>
         </button>
       </div>
 
@@ -108,7 +110,7 @@ export function ImagePreview({
             className="max-h-[390px] w-auto max-w-full object-contain rounded-sm"
           />
         ) : (
-          <div className="text-xs text-secondary">Loading preview…</div>
+          <div className="text-xs text-secondary">{t.preview.loadingPreview}</div>
         )}
 
         {/* Mode switcher overlay if preprocessed image is ready */}
@@ -117,27 +119,27 @@ export function ImagePreview({
             <button
               type="button"
               onClick={() => setPreviewMode("original")}
-              aria-label="View original image"
+              aria-label={t.preview.original}
               className={`px-2.5 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                 previewMode === "original"
                   ? "font-medium text-primary bg-subtle/50"
                   : "text-secondary hover:text-primary"
               }`}
             >
-              Original
+              {t.preview.original}
             </button>
             <div className="w-[1px] bg-subtle" />
             <button
               type="button"
               onClick={() => setPreviewMode("preprocessed")}
-              aria-label="View contrast-enhanced OCR preview"
+              aria-label={t.preview.enhanced}
               className={`px-2.5 py-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                 previewMode === "preprocessed"
                   ? "font-medium text-primary bg-subtle/50"
                   : "text-secondary hover:text-primary"
               }`}
             >
-              Enhanced (OCR view)
+              {t.preview.enhanced}
             </button>
           </div>
         )}
@@ -154,11 +156,11 @@ export function ImagePreview({
             className="rounded border-subtle text-accent focus:ring-accent accent-accent"
           />
           <span className="font-medium text-primary">
-            Apply contrast optimization before OCR
+            {t.preview.contrastTitle}
           </span>
         </label>
         <span className="text-secondary">
-          Converts to grayscale & stretches dynamic range for crisper label text
+          {t.preview.contrastDesc}
         </span>
       </div>
 
@@ -169,11 +171,11 @@ export function ImagePreview({
           id="analyze-label-btn"
           onClick={handleAnalyzeClick}
           disabled={isProcessing || isPreprocessingActive}
-          aria-label="Analyze food label with OCR"
+          aria-label={t.preview.analyzeLabel}
           className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active disabled:opacity-50 disabled:pointer-events-none rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
           <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-          <span>Analyze Label</span>
+          <span>{t.preview.analyzeLabel}</span>
         </button>
       </div>
     </div>

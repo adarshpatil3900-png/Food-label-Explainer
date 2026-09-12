@@ -11,10 +11,12 @@ import { performOcr, OcrResult, OcrProgress } from "@/lib/ocr";
 import { parseNutrition, ParsedNutritionData } from "@/lib/parseNutrition";
 import { parseIngredients, ParsedIngredientsData } from "@/lib/parseIngredients";
 import { generateNutritionSummary, NutritionTag } from "@/lib/nutritionSummary";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 type AppState = "idle" | "ready" | "processing" | "success" | "error";
 
 export default function HomePage() {
+  const { language, t } = useTranslation();
   const [appState, setAppState] = useState<AppState>("idle");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeImageSource, setActiveImageSource] = useState<string | Blob | null>(null);
@@ -54,6 +56,7 @@ export default function HomePage() {
           nutrition: nutrients,
           ingredientsData: ings,
           summaryTags: tags,
+          language,
         }),
       });
 
@@ -299,26 +302,26 @@ export default function HomePage() {
           {/* Quick Sample Selector for immediate evaluation */}
           <div className="border border-subtle bg-surface rounded-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="text-secondary">
-              <span className="font-medium text-primary">No label image handy?</span> Test with a sample food package:
+              <span className="font-medium text-primary">{t.upload.sampleHighlight}</span> {t.upload.samplePrompt}
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 id="sample-granola-btn"
                 onClick={() => loadSampleLabel("granola")}
-                aria-label="Load granola label sample"
+                aria-label={t.upload.sampleGranola}
                 className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
-                Granola Label
+                {t.upload.sampleGranola}
               </button>
               <button
                 type="button"
                 id="sample-soup-btn"
                 onClick={() => loadSampleLabel("soup")}
-                aria-label="Load vegetable soup label sample"
+                aria-label={t.upload.sampleSoup}
                 className="px-2.5 py-1 text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle rounded transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
-                Soup Label
+                {t.upload.sampleSoup}
               </button>
             </div>
           </div>
@@ -367,10 +370,10 @@ export default function HomePage() {
           <div className="border border-subtle bg-surface rounded-md p-4">
             <details className="group">
               <summary
-                aria-label={`View scanned source photo ${selectedFile.name}`}
+                aria-label={t.results.viewScannedPhoto(selectedFile.name)}
                 className="text-xs font-medium text-secondary hover:text-primary cursor-pointer select-none list-none flex items-center justify-between focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
               >
-                <span>View scanned source photo ({selectedFile.name})</span>
+                <span>{t.results.viewScannedPhoto(selectedFile.name)}</span>
                 <span className="text-[10px] text-secondary group-open:rotate-180 transition-transform" aria-hidden="true">▼</span>
               </summary>
               <div className="mt-3 pt-3 border-t border-subtle flex justify-center bg-background p-2 rounded">
@@ -388,7 +391,7 @@ export default function HomePage() {
       {/* State: ERROR - Plain actionable message with retry */}
       {appState === "error" && (
         <ErrorMessage
-          message={errorText || "An unknown error occurred during OCR recognition."}
+          message={errorText || t.error.fallbackError}
           onRetry={handleRetry}
           onReset={handleReset}
         />

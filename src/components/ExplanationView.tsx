@@ -2,6 +2,7 @@
 
 import React from "react";
 import { RotateCw, AlertCircle } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 export interface ExplanationData {
   explanation: string;
@@ -21,19 +22,21 @@ export function ExplanationView({
   errorMessage,
   onRetry,
 }: ExplanationViewProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-surface border border-subtle rounded-md p-5 space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-subtle">
-        <h3 className="text-sm font-semibold text-primary">What This Means</h3>
+        <h3 className="text-sm font-semibold text-primary">{t.results.whatThisMeans}</h3>
         {status === "success" && onRetry && (
           <button
             type="button"
             onClick={onRetry}
             className="text-xs text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
-            aria-label="Refresh explanation"
+            aria-label={t.results.regenerate}
           >
             <RotateCw className="w-3 h-3" />
-            <span>Regenerate</span>
+            <span>{t.results.regenerate}</span>
           </button>
         )}
       </div>
@@ -46,7 +49,7 @@ export function ExplanationView({
             role="status"
             aria-label="Loading"
           />
-          <span>Generating explanation…</span>
+          <span>{t.results.generatingExplanation}</span>
         </div>
       )}
 
@@ -57,7 +60,7 @@ export function ExplanationView({
             <AlertCircle className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="text-primary font-medium">
-                Explanation unavailable right now — the nutrition data above is still accurate.
+                {t.results.explanationUnavailable}
               </p>
               {errorMessage && (
                 <p className="text-[11px] text-secondary">{errorMessage}</p>
@@ -73,7 +76,7 @@ export function ExplanationView({
                 className="text-xs font-medium text-primary bg-background hover:bg-subtle border border-subtle px-3 py-1.5 rounded transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 <RotateCw className="w-3 h-3" />
-                <span>Try again</span>
+                <span>{t.results.tryAgain}</span>
               </button>
             </div>
           )}
@@ -90,7 +93,7 @@ export function ExplanationView({
           {data.takeaway && (
             <div className="pt-3 border-t border-subtle">
               <div className="bg-background border border-subtle rounded p-3 text-xs space-y-1">
-                <span className="font-semibold text-primary block">Takeaway:</span>
+                <span className="font-semibold text-primary block">{t.results.takeaway}</span>
                 <span className="text-secondary leading-relaxed block">
                   {data.takeaway}
                 </span>

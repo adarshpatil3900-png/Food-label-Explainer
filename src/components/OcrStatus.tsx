@@ -2,13 +2,16 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface OcrStatusProps {
   message?: string;
   progress?: number;
 }
 
-export function OcrStatus({ message = "Reading label…", progress = 0 }: OcrStatusProps) {
+export function OcrStatus({ message, progress = 0 }: OcrStatusProps) {
+  const { t } = useTranslation();
+  const displayMessage = message || t.status.readingLabel;
   const percent = Math.round(progress * 100);
 
   return (
@@ -20,10 +23,10 @@ export function OcrStatus({ message = "Reading label…", progress = 0 }: OcrSta
 
       <div className="space-y-1">
         <p className="text-sm font-medium text-primary">
-          {message}
+          {displayMessage}
         </p>
         <p className="text-xs text-secondary">
-          Processing image in a background worker thread. Please wait…
+          {t.status.workerNote}
         </p>
       </div>
 

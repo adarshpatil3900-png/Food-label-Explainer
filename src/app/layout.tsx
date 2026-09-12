@@ -8,6 +8,9 @@ const inter = Inter({
   display: "swap",
 });
 
+import { Providers } from "./providers";
+import { Header } from "@/components/Header";
+
 export const metadata: Metadata = {
   title: "Food Label Explainer",
   description:
@@ -20,18 +23,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-background text-primary font-sans antialiased flex flex-col">
-        <header className="w-full border-b border-subtle bg-surface px-6 py-4">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <h1 className="text-base font-semibold tracking-tight text-primary">
-              Food Label Explainer
-            </h1>
-          </div>
-        </header>
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
-          {children}
-        </main>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('food_label_theme');
+                  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-background text-primary font-sans antialiased flex flex-col transition-colors">
+        <Providers>
+          <Header />
+          <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

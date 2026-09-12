@@ -8,9 +8,10 @@ interface ExplainRequestBody {
   nutrition?: ParsedNutritionData;
   ingredientsData?: ParsedIngredientsData;
   summaryTags?: NutritionTag[];
+  language?: string;
 }
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 const systemPrompt = `You are a nutrition explanation assistant for a food label explainer tool.
 Your goal is to provide honest, plain-language explanations of food labels for everyday consumers.
@@ -19,6 +20,7 @@ Guidelines:
 - Briefly note anything notable about the ingredients if relevant (e.g. whole food bases vs refined ingredients, additives, sweeteners, sodium sources, allergens) without being alarmist or making medical claims.
 - Give a short overall takeaway (2-4 sentences max for the takeaway).
 - Avoid generic filler phrases like "As an AI", "It's important to note", or "In summary" — write directly and concisely.
+- If a target language is specified, write the explanation and takeaway clearly in that language.
 - Return ONLY valid JSON matching {"explanation": string, "takeaway": string}. Do not wrap in markdown or backticks.`;
 
 const responseSchema = {
@@ -41,7 +43,7 @@ const responseSchema = {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ExplainRequestBody;
-    const { nutrition, ingredientsData, summaryTags } = body;
+    const { nutrition, ingredientsData, summaryTags, language } = body;
 
     if (!nutrition && !ingredientsData) {
       return NextResponse.json(
@@ -96,6 +98,13 @@ export async function POST(request: NextRequest) {
         ? summaryTags.map((t) => `${t.label} (${t.detail})`).join("; ")
         : "None";
 
+    const languageInstruction =
+      language === "hi"
+        ? "Write the explanation and takeaway in Hindi (हिन्दी)."
+        : language === "mr"
+        ? "Write the explanation and takeaway in Marathi (मराठी)."
+        : "Write the explanation and takeaway in English.";
+
     const promptText = `Please analyze this packaged food label:
 
 NUTRITION PROFILE:
@@ -109,6 +118,9 @@ ${allergensList}
 
 RULE-BASED SUMMARY HIGHLIGHTS:
 ${tagsList}
+
+LANGUAGE REQUIREMENT:
+${languageInstruction}
 
 Respond strictly with a JSON object containing "explanation" and "takeaway" fields.`;
 

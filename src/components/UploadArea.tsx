@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { Upload, Camera, Image as ImageIcon } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface UploadAreaProps {
   onImageSelected: (file: File) => void;
@@ -9,6 +10,7 @@ interface UploadAreaProps {
 }
 
 export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProps) {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +62,7 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
         accept="image/*"
         className="hidden"
         id="file-upload-input"
-        aria-label="Upload image file"
+        aria-label={t.upload.chooseImage}
         onChange={handleFileChange}
         disabled={disabled}
       />
@@ -71,7 +73,7 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
         capture="environment"
         className="hidden"
         id="camera-capture-input"
-        aria-label="Capture photo with camera"
+        aria-label={t.upload.takePhoto}
         onChange={handleFileChange}
         disabled={disabled}
       />
@@ -95,10 +97,10 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
           </div>
 
           <h2 className="text-base font-medium text-primary mb-1">
-            Upload food packaging label
+            {t.upload.title}
           </h2>
           <p className="text-sm text-secondary mb-6">
-            Drag and drop an image file here, or choose an option below
+            {t.upload.subtitle}
           </p>
 
           {/* Action Buttons */}
@@ -108,11 +110,11 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
               id="choose-file-btn"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              aria-label="Choose image file from your device"
+              aria-label={t.upload.chooseImage}
               className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <ImageIcon className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Choose Image</span>
+              <span>{t.upload.chooseImage}</span>
             </button>
 
             <button
@@ -120,16 +122,16 @@ export function UploadArea({ onImageSelected, disabled = false }: UploadAreaProp
               id="take-photo-btn"
               onClick={() => cameraInputRef.current?.click()}
               disabled={disabled}
-              aria-label="Take photo with camera"
+              aria-label={t.upload.takePhoto}
               className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-primary bg-surface hover:bg-background active:bg-subtle border border-subtle rounded transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Camera className="w-4 h-4 text-secondary" strokeWidth={1.75} aria-hidden="true" />
-              <span>Take Photo</span>
+              <span>{t.upload.takePhoto}</span>
             </button>
           </div>
 
           <p className="text-xs text-secondary mt-5">
-            Supports JPG, PNG, WEBP, HEIC. All processing runs locally in your browser.
+            {t.upload.hint}
           </p>
         </div>
       </div>

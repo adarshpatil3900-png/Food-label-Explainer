@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Copy, Check, RotateCcw, FileText } from "lucide-react";
 import { OcrResult } from "@/lib/ocr";
+import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface OcrResultViewProps {
   result: OcrResult;
@@ -15,6 +16,7 @@ export function OcrResultView({
   onReset,
   onReanalyze,
 }: OcrResultViewProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -39,7 +41,7 @@ export function OcrResultView({
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-secondary" strokeWidth={1.75} />
           <h2 className="text-base font-semibold text-primary">
-            Extracted Text
+            {t.results.title}
           </h2>
           <span className="text-xs text-secondary bg-background px-2 py-0.5 rounded border border-subtle">
             {wordCount} words • {lineCount} lines • {confidencePercent}% confidence
@@ -57,12 +59,12 @@ export function OcrResultView({
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-accent" />
-                <span>Copied</span>
+                <span>{t.results.copied}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5 text-secondary" />
-                <span>Copy Text</span>
+                <span>{t.results.copyRawText}</span>
               </>
             )}
           </button>
@@ -74,7 +76,7 @@ export function OcrResultView({
             className="text-xs font-medium text-white bg-accent hover:bg-accent-hover active:bg-accent-active transition-colors inline-flex items-center gap-1.5 py-1.5 px-3 rounded"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Scan Another Label</span>
+            <span>{t.results.scanAnother}</span>
           </button>
         </div>
       </div>
@@ -102,7 +104,7 @@ export function OcrResultView({
             onClick={onReanalyze}
             className="text-secondary hover:text-primary underline text-left sm:text-right"
           >
-            Re-run OCR on current image
+            {t.results.rerunOcr}
           </button>
         )}
       </div>
